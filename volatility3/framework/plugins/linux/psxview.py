@@ -1,7 +1,7 @@
 # This file is Copyright 2021 Volatility Foundation and licensed under the Volatility Software License 1.0
 # which is available at https://www.volatilityfoundation.org/license/vsl-v1.0
 #
-from typing import Any, Callable, Iterable, List, Tuple
+from typing import List
 
 from volatility3.framework import interfaces, renderers
 from volatility3.framework.configuration import requirements
@@ -27,6 +27,9 @@ class PsxView(interfaces.plugins.PluginInterface):
             requirements.PluginRequirement(
                 name="pslist", plugin=pslist.PsList, version=(2, 0, 0)
             ),
+            requirements.PluginRequirement(
+                name="psscan", plugin=psscan.PsScan, version=(2, 0, 0)
+            ),
             requirements.ListRequirement(
                 name="pids",
                 description="Filter on specific process IDs",
@@ -35,6 +38,7 @@ class PsxView(interfaces.plugins.PluginInterface):
             )
         ]
 
+
     def _get_pslist(self):
         filter_func = pslist.PsList.create_pid_filter(self.config.get("pids", None))
         tasks = pslist.PsList.list_tasks(
@@ -42,6 +46,7 @@ class PsxView(interfaces.plugins.PluginInterface):
         )
         return tasks
     
+
     def _get_psscan(self):
         vmlinux_module_name = self.config["kernel"]
         vmlinux = self.context.modules[vmlinux_module_name]
@@ -49,6 +54,7 @@ class PsxView(interfaces.plugins.PluginInterface):
             self.context, vmlinux_module_name, vmlinux.layer_name
         )
         return tasks
+
 
     def _generator(self):
         """Compares processes in memory from various sources."""
@@ -86,15 +92,14 @@ class PsxView(interfaces.plugins.PluginInterface):
             )
             
 
-
     def run(self):
         headers = [
             ("PID", int),
             ("COMM", str),
             ("PsList", bool),
             ("PsScan", bool)
-            ]
+        ]
         return renderers.TreeGrid(
             headers,
             self._generator()
-            )
+        )
